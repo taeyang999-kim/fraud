@@ -107,11 +107,11 @@ st.markdown("---")
 # =========================
 st.header("📥 거래 정보 입력")
 amount = st.number_input("거래 금액", min_value=0.0, value=1000.0)
-old_balance = st.number_input("기존 잔액", min_value=0.0, value=5000.0)
-new_balance = st.number_input("변경 후 잔액", min_value=0.0, value=4000.0)
+old_balance = st.number_input("기존 잔액(구매자)", min_value=0.0, value=5000.0)
+new_balance = st.number_input("변경 후 잔액(구매자)", min_value=0.0, value=4000.0)
 
-old_balance_dest = st.number_input("수신자 기존 잔액", min_value=0.0, value=0.0)
-new_balance_dest = st.number_input("수신자 변경 후 잔액", min_value=0.0, value=0.0)
+old_balance_dest = st.number_input("기존 잔액(판매자)", min_value=0.0, value=0.0)
+new_balance_dest = st.number_input("변경 후 잔액(판매자)", min_value=0.0, value=0.0)
 
 transaction_type = st.selectbox("거래 유형", ["PAYMENT(결제, 지불)", "TRANSFER(이체, 송금)", "CASH_OUT(현금 인출, 출금)", "DEBIT(출금, 계좌 인출, 직불)"])
 
