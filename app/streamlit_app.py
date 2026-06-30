@@ -113,7 +113,7 @@ new_balance = st.number_input("변경 후 잔액", min_value=0.0, value=4000.0)
 old_balance_dest = st.number_input("수신자 기존 잔액", min_value=0.0, value=0.0)
 new_balance_dest = st.number_input("수신자 변경 후 잔액", min_value=0.0, value=0.0)
 
-transaction_type = st.selectbox("거래 유형", ["PAYMENT", "TRANSFER", "CASH_OUT", "DEBIT"])
+transaction_type = st.selectbox("거래 유형", ["PAYMENT(결제, 지불)", "TRANSFER(이체, 송금)", "CASH_OUT(현금 인출, 출금)", "DEBIT(출금, 계좌 인출, 직불)"])
 
 st.markdown("---")
 
