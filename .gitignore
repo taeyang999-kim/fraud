@@ -1,1 +1,6 @@
-data/PS_20174392719_1491204439457_log.csv
+venv/
+data/
+models/
+__pycache__/
+*.h5
+*.pkl
