@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import joblib
 from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import train_test_split
 from model import build_autoencoder
 
 # =========================
@@ -20,20 +21,27 @@ features = [
     "newbalanceDest"
 ]
 
-X = df[features]
+# =========================
+# 🚨 정상 거래만 추출
+# =========================
+normal_df = df[df["isFraud"] == 0]
+
+X_train, X_test = train_test_split(
+    normal_df[features],
+    test_size=0.2,
+    random_state=42
+)
 
 # =========================
-# 📊 스케일링 (중요)
+# 📊 스케일러는 학습 데이터만 사용
 # =========================
 scaler = StandardScaler()
-X_scaled = scaler.fit_transform(X)
 
-# =========================
-# 🚨 정상 데이터만 학습
-# =========================
-X_train = X_scaled[df["isFraud"] == 0]
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
 
-print("정상 데이터 개수:", len(X_train))
+print("학습 데이터 :", len(X_train))
+print("테스트 데이터 :", len(X_test))
 
 # =========================
 # 🧠 모델 생성
@@ -58,3 +66,15 @@ model.save("models/autoencoder.h5")
 joblib.dump(scaler, "models/scaler.pkl")
 
 print("✅ 학습 완료!")
+
+X_pred = model.predict(X_test)
+
+mse = np.mean(np.square(X_test - X_pred), axis=1)
+
+threshold = np.percentile(mse, 95)
+
+joblib.dump(threshold, "models/threshold.pkl")
+np.save("models/mse.npy", mse)
+
+print("Threshold :", threshold)
+print("평균 MSE :", np.mean(mse))

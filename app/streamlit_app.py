@@ -1,6 +1,8 @@
 import streamlit as st
 import numpy as np
+import matplotlib.pyplot as plt
 import sys
+import joblib
 import os
 
 # 💡 src 폴더를 참조하기 위해 경로를 추가합니다.
@@ -16,18 +18,6 @@ st.markdown("""
         .stApp {
             background-color: #0b0f19 !important;
             color: #e2e8f0 !important;
-        }
-        
-        /* 2. 상단 헤더 및 텍스트 컬러 변경 */
-        h1 {
-            color: #38bdf8 !important; /* 사이언 블루 */
-            font-family: 'Pretendard', 'Malgun Gothic', sans-serif;
-            font-weight: 800;
-            text-shadow: 0 0 10px rgba(56, 189, 248, 0.3);
-            margin-bottom: 5px !important;
-        }
-        div[data-testid="stMarkdownContainer"] p {
-            color: #94a3b8 !important;
         }
         
         /* 3. 입력 영역을 하나의 멋진 '보안 카드' 형태로 묶기 */
@@ -90,15 +80,23 @@ st.markdown("""
 # =========================
 # 🎯 기본 화면 및 모델 로드
 # =========================
-st.title("💳 카드 부정사용 탐지 시스템 (Fraud Detection)")
 
-# 💡 모델 파일명을 실제 유저님의 파일명인 autoencoder.h5로 정상 수정했습니다!
 try:
     scaler = load_scaler("models/scaler.pkl")
     model = load_autoencoder_model("models/autoencoder.h5")
+    
+    mse = np.load("models/mse.npy")
+    threshold = joblib.load("models/threshold.pkl")
+    
 except Exception as e:
+    # 🚨 파일 로드 실패 시 에러 메시지 출력 및 변수 초기화
+    st.error(f"⚠️ 모델 또는 데이터를 불러오는 중 오류가 발생했습니다: {e}")
     scaler = None
     model = None
+    mse = None        # ⭐ 변수가 정의되지 않는 문제를 막기 위해 None으로 초기화
+    threshold = None  # ⭐ 함께 초기화
+    
+  
 
 st.markdown("---")
 
@@ -131,8 +129,6 @@ if st.button("🔍 사기 여부 검사"):
         st.subheader("📊 분석 결과")
         st.write(f"거래 유형: {transaction_type}")
         st.write(f"재구성 손실 점수 (Anomaly Score): {score:.4f}")
-
-        threshold = 2.0 
         
         progress = min(score / (threshold * 2), 1.0)
         st.progress(progress)
@@ -145,3 +141,30 @@ if st.button("🔍 사기 여부 검사"):
             st.write("→ 정상 범위 내의 거래 패턴입니다.")
     else:
         st.error("❌ 모델 또는 스케일러를 불러오지 못했습니다. models/ 폴더 내 파일 경로를 확인해 주세요.")
+        
+
+
+st.title("🛡️ 실시간 이상 거래 탐지 & 오차율 평가")
+
+# 💡 mse 데이터가 정상적으로 로드되었을 때만 실행
+if mse is not None:
+    # 1. 유저가 직접 기준선 조절할 수 있게 슬라이더 배치
+    percentile = st.slider("이상 거래 판정 임계값 선택 (백분위)", 80.0, 99.9, 95.0)
+
+    threshold = np.percentile(mse, percentile)   # ⭐ 이제 안전하게 호출됩니다.
+
+    st.metric(label="현재 설정된 오차율 기준치 (Threshold)", value=f"{threshold:.4f}")
+
+    # 2. 오차율 시각화 차트 만들기
+    fig, ax = plt.subplots(figsize=(10, 4))
+    ax.plot(mse, label="Transaction Reconstruction Error (MSE)", color="blue", alpha=0.6)
+    ax.axhline(y=threshold, color="red", linestyle="--", label=f"Threshold ({percentile}%)")
+    ax.set_title("실시간 거래별 오차율 분포")
+    ax.legend()
+
+    st.pyplot(fig)
+
+    # 3. 이 기준선일 때 사기 탐지 결과 계산
+    y_pred = (mse > threshold).astype(int)
+else:
+    st.warning("⚠️ 평가용 MSE 데이터(`mse.npy`)가 로드되지 않아 시각화 차트를 표시할 수 없습니다.")

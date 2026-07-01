@@ -1,6 +1,7 @@
 venv/
 data/
 models/
+board.db
 __pycache__/
 *.h5
 *.pkl
